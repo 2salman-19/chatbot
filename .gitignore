@@ -1,0 +1,49 @@
+# Ignore .env files
+.env
+*.env
+
+# Ignore compiled Python files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Ignore SQLite DBs
+*.sqlite3
+*.db
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore VS Code settings
+.vscode/
+
+# Ignore Streamlit
+.streamlit/
+
+# Ignore OS-generated files
+.DS_Store
+Thumbs.db
+
+# Ignore logs
+*.log
+
+# Ignore virtual environments
+venv/
+env/
+chatbot/
+
+# Ignore Python cache and build artifacts
+*.egg-info/
+build/
+dist/
+
+# Ignore only specific generated data files
+data/*.npy
+data/*.json
+data/chroma_db/
+
+# Scripts-specific ignore
+scripts/__pycache__/
+scripts/data/*.npy
+scripts/data/*.json
