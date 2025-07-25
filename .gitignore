@@ -45,5 +45,3 @@ data/chroma_db/
 
 # Scripts-specific ignore
 scripts/__pycache__/
-scripts/data/*.npy
-scripts/data/*.json
