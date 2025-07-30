@@ -14,35 +14,54 @@ def get_project_root():
 
 
 project_root = get_project_root()
-embedding_path = os.path.join(project_root, "data", "jazz_package_embeddings.npy")
-text_path = os.path.join(project_root, "data", "jazz_package_texts.json")
-print("Resolved project root:", project_root)
-print("Embedding path:", embedding_path)
-print("Text path:", text_path)
 chroma_path = os.path.join(project_root, "data", "chroma_db")
-
 client = chromadb.PersistentClient(path=chroma_path)
-print("ChromaDB persist directory:", chroma_path)
 
-embeddings = np.load(embedding_path)
-with open(text_path, "r", encoding="utf-8") as f:
-    texts = json.load(f)
+def ingest_collection(collection_name, embedding_file, text_file):
+    """Generalized function to ingest data into a ChromaDB collection"""
+    try:
+        embeddings = np.load(embedding_file)
+        with open(text_file, "r", encoding="utf-8") as f:
+            texts = json.load(f)
 
-collection = client.get_or_create_collection(name="jazz_packages")
-ids = [f"pkg_{i}" for i in range(len(texts))]
-metadatas = [{"text": text} for text in texts]
+        collection = client.get_or_create_collection(name=collection_name)
+        ids = [f"{collection_name}_{i}" for i in range(len(texts))]
+        metadatas = [{"text": text, "source": collection_name} for text in texts]
 
-collection.add(
-    embeddings=embeddings,
-    documents=texts,
-    metadatas=metadatas,
-    ids=ids
+        collection.add(
+            embeddings=embeddings,
+            documents=texts,
+            metadatas=metadatas,
+            ids=ids
+        )
+        print(f"Ingested {len(texts)} documents into collection '{collection_name}'")
+        return True
+    except Exception as e:
+        print(f"Error ingesting {collection_name}: {str(e)}")
+        return False
+
+
+# collections for dummy data
+print("=== Ingesting Dummy Data Collections ===")
+ingest_collection(
+    collection_name="jazz_packages",
+    embedding_file=os.path.join(project_root, "data", "jazz_package_embeddings.npy"),
+    text_file=os.path.join(project_root, "data", "jazz_package_texts.json")
 )
-
-print(f"Ingested {len(texts)} packages into ChromaDB 'jazz_packages' collection")
-print("Collections in DB:", [c.name for c in client.list_collections()])
-
-
+# collections for scrape ProPakistani data
+print("=== Ingesting ProPakistani Data Collections ===")
+ingest_collection(
+    collection_name="propakistani_packages",
+    embedding_file=os.path.join(project_root,"data", "propakistani_package_embeddings.npy"),
+    text_file=os.path.join(project_root, "data", "propakistani_package_texts.json")
+)
+# collections for OCR data
+print("=== Ingesting OCR Data Collections ===")
+ingest_collection(
+    collection_name="ocr_packages",
+    embedding_file=os.path.join(project_root, "data", "ocr_package_embeddings.npy"),
+    text_file=os.path.join(project_root, "data", "ocr_package_texts.json")
+)
 
 
 
