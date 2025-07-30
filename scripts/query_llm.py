@@ -2,8 +2,10 @@
 import os
 import requests
 from dotenv import load_dotenv
-from scripts.parallelchroma import ParallelChromaQuery
+from scripts.parallelchroma import query_all_collections_parallel, query_all_sequential_collections
 from scripts.result_combiner import combine_and_rank_results
+from sentence_transformers import SentenceTransformer
+import chromadb
 
 load_dotenv()
 
@@ -26,34 +28,61 @@ def query_llm(user_query):
 
     project_root = get_project_root()
     chroma_path = os.path.join(project_root, "data", "chroma_db")
+
+    # First, verify ChromaDB and collections exist
+    try:
+        client = chromadb.PersistentClient(path=chroma_path)
+        available_collections = [col.name for col in client.list_collections()]
+        print(f"Available collections: {available_collections}")
+    except Exception as e:
+        return f"Error connecting to ChromaDB: {str(e)}"
     
-    # Initialize parallel query system
-    parallel_query = ParallelChromaQuery(chroma_path)
+    # load embedding model
+    model = SentenceTransformer('all-MiniLM-L6-v2')
     
+    # Generate query embedding
+    query_embedding = model.encode([user_query])[0]
+
     # Define collections to query
     collections = ['jazz_packages', 'propakistani_packages', 'ocr_packages']
     
-    # Generate query embedding
-    query_embedding = parallel_query.model.encode([user_query])[0]
+    # Filter to only include collections that exist
+    existing_collections = [col for col in collections if col in available_collections]
+    if not existing_collections:
+        return "No valid collections found in ChromaDB."
     
-    # Query all collections in parallel
-    print("Querying collections in parallel...")
-    collection_results = parallel_query.query_all_collections(collections, query_embedding)
+    print(f"Querying existing collections: {existing_collections}")
     
-    # Convert results to list for combining
-    results_list = list(collection_results.values())
+    # Try parallel querying first
+    print("Attempting parallel query...")
+    collection_results_dict = query_all_collections_parallel(
+        chroma_path, existing_collections, query_embedding, n_results=10
+    )
     
-    if not results_list:
+    # If parallel query failed, try sequential
+    if not collection_results_dict:
+        print("Parallel query failed, trying sequential...")
+        collection_results_dict = query_all_sequential_collections(
+            chroma_path, existing_collections, query_embedding, n_results=10
+        )
+    
+    # Convert dictionary values to list for combining
+    collection_results = list(collection_results_dict.values())
+    
+    if not collection_results:
         return "I couldn't find any relevant information about Jazz packages in our database."
     
     # Combine and rank results
-    combined_results = combine_and_rank_results(results_list)
+    combined_results = combine_and_rank_results(collection_results)
     
     # Build context with source information
     retrieved_info = ""
     for doc, metadata in zip(combined_results["documents"], combined_results["metadatas"]):
         source = metadata.get("source", "Unknown")
         retrieved_info += f"Source: {source}\n{doc}\n\n"
+    # If no results found
+    if not combined_results["documents"]:
+        return "I couldn't find any relevant information about Jazz packages in our database."
     
     # Construct prompt for LLM
     prompt = (
@@ -75,8 +104,8 @@ def query_llm(user_query):
     data = {
         "model": llm_model,
         "messages": [{"role": "user", "content": prompt}],
-        "max_tokens": 512,
-        "temperature": 0.5
+        "max_tokens": 1024,
+        "temperature": 0.7
     }
     response = requests.post(
         "https://api.groq.com/openai/v1/chat/completions",
