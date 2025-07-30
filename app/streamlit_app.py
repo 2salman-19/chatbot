@@ -37,9 +37,9 @@ elif option == "Chatbot":
     # Display chat history
     for entry in st.session_state.chat_history:
         if entry['role'] == 'user':
-            st.markdown(f"**You:** {entry['content']}")
+            st.chat_message("user").write(entry['content'])
         else:
-            st.markdown(f"**JazzBot:** {entry['content']}")
+            st.chat_message("assistant").write(entry['content'])
 
     # Chat input
     user_input = st.text_input("Your message:", key="user_input")
@@ -54,12 +54,12 @@ elif option == "Chatbot":
             except Exception as e:
                 error_msg = f"Error during LLM query: {e}"
                 st.session_state.chat_history.append({'role': 'assistant', 'content': error_msg})
-        st.experimental_rerun()
+        st.rerun()
 
     # Option to clear chat
     if st.button("Clear Chat History"):
         st.session_state.chat_history = []
-        st.experimental_rerun()
+        st.rerun()
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("Developed by [Salman Siddique](https://github.com/2salman-19)")
@@ -67,4 +67,3 @@ st.sidebar.markdown("""
 This app allows you to interact with Jazz's mobile packages using a chatbot interface.\
 You can ingest package data into ChromaDB and query the LLM for information about Jazz packages.
 """)
-
