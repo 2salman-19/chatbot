@@ -12,8 +12,7 @@ A Retrieval-Augmented Generation (RAG) chatbot for Jazz mobile packages (interne
 - **Multi-source Data**: Ingests Jazz package data from PDF, OCR (images), and web scraping (ProPakistani).
 - **Easy Data Updates**: Add or update packages and regenerate embeddings easily.
 - **Interactive Chatbot**: Use in terminal or via a Streamlit web app.
-
--**web search** : if the user query dose not match with exist data collections then the web search will activate and get the results from the mentioned website with bangs duckduckgo library (ddg) 
+- **web search** : if the user query dose not match with exist data collections then the web search will activate and get the results from the mentioned website with bangs duckduckgo library (ddg) 
 
 ---
 
