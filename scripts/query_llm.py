@@ -30,7 +30,7 @@ def should_use_bang_search(query, database_results):
     
     # Check for keywords indicating latest/current information
     latest_keywords = [
-        'latest', 'current', 'new', 'today', 'now', 'recent', 'updated',
+        'latest', 'current', 'new package', 'today', 'now', 'recent', 'updated',
         '2024', 'this month', 'this week', 'available now'
     ]
     
